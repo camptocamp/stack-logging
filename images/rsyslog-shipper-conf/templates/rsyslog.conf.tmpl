@@ -1,0 +1,52 @@
+module(load="imudp")
+module(load="imtcp")
+module(load="imrelp")
+module(load="omrelp")
+
+input(type="imudp" port="1514" ruleset="dispatch")
+input(type="imtcp" port="1514" ruleset="dispatch")
+input(type="imrelp" port="2514" ruleset="dispatch" tls="off")
+input(type="imrelp" port="2515" ruleset="dispatch" tls="on")
+
+$PrivDropToUser syslog
+$PrivDropToGroup syslog
+
+$MaxMessageSize 32k
+$WorkDirectory /var/spool/rsyslog
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+
+template(name="ForwardFormatWithToken" type="string" string="<%PRI%>%TIMESTAMP:::date-rfc3339% %HOSTNAME% %syslogtag:1:64% TOKEN@{{getenv "TOKEN"}} %msg:::sp-if-no-1st-sp%%msg%")
+
+template(name="LocalDynafile" type="string" string="/var/log/%$now%/%hostname%-%programname%.%syslogfacility-text%.%syslogseverity-text%.log")
+
+ruleset(
+  name="dispatch"
+  queue.type="LinkedList"
+) {
+  action(type="omfile"
+         name="write_to_local_files"
+         dynaFile="LocalDynafile"
+         template="RSYSLOG_FileFormat"
+         dirCreateMode="0755"
+         FileCreateMode="0644"
+  )
+  action(type="omrelp"
+         name="fwd_to_logserver"
+         target="{{getenv "TARGET"}}"
+         template="ForwardFormatWithToken"
+         port="5515"
+         queue.type="LinkedList"
+         queue.filename="fwd_queue"
+         action.resumeretrycount="-1"
+         queue.dequeuebatchsize="100"
+         queue.saveonshutdown="on"
+         queue.discardseverity="8"
+         queue.timeoutenqueue="0"
+         queue.maxdiskspace="1g"
+         queue.highwatermark="8000"
+         queue.lowwatermark="2000"
+         queue.size="10000"
+         queue.discardmark="9750"
+         tls="on"
+  )
+}

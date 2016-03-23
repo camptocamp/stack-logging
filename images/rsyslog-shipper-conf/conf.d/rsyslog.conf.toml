@@ -1,0 +1,4 @@
+[template]
+src = "rsyslog.conf.tmpl"
+dest = "/etc/rsyslog.d/rsyslog.conf"
+

@@ -1,0 +1,54 @@
+rsyslog:
+  image: 'camptocamp/rsyslog-shipper-conf'
+  ports:
+    - '1514:1514/tcp'
+    - '1514:1514/udp'
+    - '2514:2514/tcp'
+    - '2515:2515/tcp'
+  labels:
+    io.rancher.container.hostname_override: container_name
+    io.rancher.scheduler.affinity:host_label: node_role=monitoring
+    io.rancher.sidekicks: rsyslog-bin
+    io.rancher.container.pull_image: always
+  environment:
+    TARGET: '1.2.3.4' #TODO
+    TOKEN: 'toto123'  #TODO
+
+rsyslog-bin:
+  image: 'camptocamp/rsyslog-shipper-bin'
+  labels:
+    io.rancher.scheduler.affinity:host_label: node_role=monitoring
+    io.rancher.container.hostname_override: container_name
+    io.rancher.container.pull_image: always
+  volumes_from:
+  - 'rsyslog'
+  volumes:
+    - 'logging_logs:/var/log'
+    - 'logging_spool:/var/spool/rsyslog'
+  net: 'container:rsyslog'
+
+ssh:
+  image: 'camptocamp/sshd-shell'
+  labels:
+    io.rancher.scheduler.affinity:host_label: node_role=monitoring
+    io.rancher.container.hostname_override: container_name
+    io.rancher.container.pull_image: always
+  environment:
+    USERLIST: '' # TODO
+  volumes:
+    - 'logging_logs:/var/log:ro'
+  ports:
+    - '2522:22/tcp'
+
+logspout:
+  environment:
+    ROUTE_URIS: syslog+tcp://rsyslog.logging.rancher.internal:1514
+    SYSLOG_FORMAT: rfc3164
+  labels:
+    io.rancher.scheduler.global: 'true'
+  image: gliderlabs/logspout:v3
+  links:
+    - rsyslog:rsyslog
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  stdin_open: true

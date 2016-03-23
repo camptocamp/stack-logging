@@ -1,0 +1,8 @@
+rsyslog-data:
+  scale: 1
+rsyslog:
+  scale: 1
+rsyslog-bin:
+  scale: 1
+sshd-shell:
+  scale: 1
