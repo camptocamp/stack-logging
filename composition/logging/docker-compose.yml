@@ -18,11 +18,7 @@ rsyslog:
     io.rancher.container.hostname_override: container_name
     io.rancher.container.pull_image: always
     io.rancher.sidekicks: rsyslog-conf
-  ports:
-    - '1514:1514/tcp'
-    - '1514:1514/udp'
-    - '2514:2514/tcp'
-    - '2515:2515/tcp'
+    io.rancher.container.requested_ip: 10.42.24.10
   volumes_from:
   - 'rsyslog-conf'
   volumes:
