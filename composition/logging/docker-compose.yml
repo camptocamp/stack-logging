@@ -1,31 +1,33 @@
-rsyslog:
+rsyslog-conf:
   image: 'camptocamp/rsyslog-shipper-conf'
-  ports:
-    - '1514:1514/tcp'
-    - '1514:1514/udp'
-    - '2514:2514/tcp'
-    - '2515:2515/tcp'
   labels:
+    io.rancher.container.start_once: 'true'
     io.rancher.container.hostname_override: container_name
     io.rancher.scheduler.affinity:host_label: node_role=monitoring
-    io.rancher.sidekicks: rsyslog-bin
     io.rancher.container.pull_image: always
   environment:
     TARGET: '1.2.3.4' #TODO
     TOKEN: 'toto123'  #TODO
+  volumes:
+    - '/etc/rsyslog.d'
 
-rsyslog-bin:
+rsyslog:
   image: 'camptocamp/rsyslog-shipper-bin'
   labels:
     io.rancher.scheduler.affinity:host_label: node_role=monitoring
     io.rancher.container.hostname_override: container_name
     io.rancher.container.pull_image: always
+    io.rancher.sidekicks: rsyslog-conf
+  ports:
+    - '1514:1514/tcp'
+    - '1514:1514/udp'
+    - '2514:2514/tcp'
+    - '2515:2515/tcp'
   volumes_from:
-  - 'rsyslog'
+  - 'rsyslog-conf'
   volumes:
     - 'logging_logs:/var/log'
     - 'logging_spool:/var/spool/rsyslog'
-  net: 'container:rsyslog'
 
 ssh:
   image: 'camptocamp/sshd-shell'
