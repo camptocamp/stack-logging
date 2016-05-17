@@ -1,3 +1,24 @@
+{{- define "remote_target" }}
+  action(type="omrelp"
+         name="fwd_to_logserver"
+         target="{{getenv "TARGET"}}"
+         template="ForwardFormatWithToken"
+         port="5515"
+         queue.type="LinkedList"
+         queue.filename="fwd_queue"
+         action.resumeretrycount="-1"
+         queue.dequeuebatchsize="100"
+         queue.saveonshutdown="on"
+         queue.discardseverity="8"
+         queue.timeoutenqueue="0"
+         queue.maxdiskspace="1g"
+         queue.highwatermark="8000"
+         queue.lowwatermark="2000"
+         queue.size="10000"
+         queue.discardmark="9750"
+         tls="on"
+  )
+{{ end }}
 module(load="imudp")
 module(load="imtcp")
 module(load="imrelp")
@@ -30,23 +51,7 @@ ruleset(
          dirCreateMode="0755"
          FileCreateMode="0644"
   )
-  action(type="omrelp"
-         name="fwd_to_logserver"
-         target="{{getenv "TARGET"}}"
-         template="ForwardFormatWithToken"
-         port="5515"
-         queue.type="LinkedList"
-         queue.filename="fwd_queue"
-         action.resumeretrycount="-1"
-         queue.dequeuebatchsize="100"
-         queue.saveonshutdown="on"
-         queue.discardseverity="8"
-         queue.timeoutenqueue="0"
-         queue.maxdiskspace="1g"
-         queue.highwatermark="8000"
-         queue.lowwatermark="2000"
-         queue.size="10000"
-         queue.discardmark="9750"
-         tls="on"
-  )
+{{ if ne "" (getenv "TARGET") -}}
+{{ template "remote_target" -}}
+{{ end -}}
 }
